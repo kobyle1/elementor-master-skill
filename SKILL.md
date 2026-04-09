@@ -55,138 +55,11 @@ writing raw Elementor JSON, and integrating with ACF, WooCommerce, and REST API.
 10. **Never animate containers** — Animating a container causes `opacity:0` on the live site. Animations go ONLY on widgets inside containers.
 11. **Always wrap JSON for import** — Raw arrays cannot be imported. Always use the version/title/type/content envelope.
 12. **Never use `flex_wrap: "wrap"`** — It is NOT respected on import. Always split multi-row grids into separate explicit `row_nowrap` containers (see §3e).
-13. **Accordion/Toggle widget — minimal settings only** — Only `tabs`, `active_item`, `title_html_tag` in settings. Any extra style keys (background_color, icon, border) break the widget editor panel on import.
+13. **Accordion/Toggle widget — safe settings only** — Only these keys are safe: `tabs`, `active_item`, `title_html_tag`, `title_color`, `active_color`, `content_color`. Any other style keys (background_color, icon{}, icon_active{}, border_color, typography_*, icon_color) break the widget editor panel on import. Note: active title color key is `active_color`, NOT `title_active_color`.
 
 ---
 
-## §1 — Editing Existing Pages via WP-CLI
-
-```bash
-# List Elementor pages
-wp @site post list --post_type=page \
-  --meta_key=_elementor_edit_mode --meta_value=builder \
-  --fields=ID,post_title,post_name,post_status
-
-# 1. Backup
-wp @site post meta get {post_id} _elementor_data > /tmp/elementor-backup-{post_id}.json
-
-# 2. Dry run
-wp @site search-replace "Old Text" "New Text" wp_postmeta \
-  --include-columns=meta_value --dry-run --precise
-
-# 3. Execute
-wp @site search-replace "Old Text" "New Text" wp_postmeta \
-  --include-columns=meta_value --precise
-
-# 4. Flush CSS
-wp @site elementor flush-css
-# If CLI not available:
-wp @site option delete _elementor_global_css
-wp @site post meta delete-all _elementor_css
-
-# 5. Verify
-wp @site post get {post_id} --fields=ID,post_title,post_status,guid
-```
-
-Safe to replace: text, button labels, phone/email, image URLs (same size).
-Risky: HTML structure, widget IDs, section/column settings, CSS classes.
-
----
-
-## §2 — Editing via Browser Automation
-
-Editor URL: https://example.com/wp-admin/post.php?post={ID}&action=elementor
-
-Wait 5-10 seconds for loading overlay to disappear.
-
-- Edit text: click element > Content tab > edit > Ctrl+S
-- Change image: click image > thumbnail > Media Library > Insert Media > Save
-- Edit button: click button > Content/Style tabs > Save
-
-```bash
-playwright-cli -s=wp-editor navigate "https://example.com/wp-admin/post.php?post={ID}&action=elementor"
-```
-
----
-
-## §3 — Building Pages in Elementor JSON
-
-Modern Elementor (3.6+) uses **Containers with Flexbox** exclusively.
-Structure: Container (outer, boxed) > Container (inner, row/column) > Widget
-Every element needs: `id` (7-char random string), `elType`, `settings`, `elements` (children).
-
----
-
-## §3a — Container Architecture (Modern Elementor)
-
-⛔ **FORBIDDEN** — Never use these in generated JSON:
-- `"elType": "section"`
-- `"elType": "column"`
-
-✅ **REQUIRED** — Use only:
-- `"elType": "container"` for ALL layout wrappers
-
-### Outer Container (full-width section wrapper)
-
-```json
-{
-  "id": "a1b2c3d",
-  "elType": "container",
-  "settings": {
-    "content_width": "boxed",
-    "boxed_width": {"unit": "px", "size": 1200},
-    "flex_direction": "column",
-    "justify_content": "center",
-    "align_items": "center",
-    "padding": {"unit": "px", "top": "80", "bottom": "80", "left": "0", "right": "0", "isLinked": false},
-    "background_background": "classic",
-    "background_color": "#ffffff"
-  },
-  "elements": []
-}
-```
-
-### Inner Container (row — side by side columns)
-
-```json
-{
-  "id": "e4f5g6h",
-  "elType": "container",
-  "settings": {
-    "content_width": "full",
-    "flex_direction": "row",
-    "justify_content": "space-between",
-    "align_items": "center",
-    "gap": {"unit": "px", "size": 40, "column": "40", "row": "40", "isLinked": true},
-    "width": {"unit": "%", "size": 100}
-  },
-  "elements": []
-}
-```
-
-### Inner Container (single column / centered content)
-
-```json
-{
-  "id": "i7j8k9l",
-  "elType": "container",
-  "settings": {
-    "content_width": "full",
-    "flex_direction": "column",
-    "justify_content": "center",
-    "align_items": "center",
-    "width": {"unit": "%", "size": 100}
-  },
-  "elements": []
-}
-```
-
-### Flexbox Settings Reference
-
-| Setting | Values |
-|---|---|
-| `flex_direction` | `"row"` / `"column"` / `"row-reverse"` / `"column-reverse"` |
-| `justify_content` | `"flex-start"` / `"center"` / `"flex-end"` / `"space-between"` / `"space-around"` / `"space-evenly"` |
+## §1 — Editing Existing Pages via WP-CLI/ `"flex-end"` / `"space-between"` / `"space-around"` / `"space-evenly"` |
 | `align_items` | `"flex-start"` / `"center"` / `"flex-end"` / `"stretch"` |
 | `flex_wrap` | `"wrap"` / `"nowrap"` |
 
@@ -397,8 +270,19 @@ Import path in Elementor: Templates → Saved Templates → Import Templates →
 **testimonial-carousel (Pro):** `slides` (array — NOT `items`), each slide: `{content, image {url}, name, title}`
 
 **accordion:** `tabs` (repeater: `tab_title`, `tab_content`)
-⛔ **CRITICAL — Accordion import rule**: Use ONLY `tabs`, `active_item`, `title_html_tag` in settings.  
-Any additional style keys (`background_color`, `icon`, `icon_active`, `border_color`, `typography_*`, `content_color`, etc.) **break the widget editor panel on import** — the accordion becomes non-editable in the Elementor UI.
+⛔ **CRITICAL — Accordion import rule**: Only the following keys are safe in settings:
+
+| Key | Example | Notes |
+|-----|---------|-------|
+| `tabs` | `[{_id, tab_title, tab_content}]` | Required |
+| `active_item` | `1` | Required |
+| `title_html_tag` | `"h3"` | Required |
+| `title_color` | `"#ffffff"` | Safe — title text color |
+| `active_color` | `"#00e5ff"` | Safe — open-item title color (⚠️ NOT `title_active_color`) |
+| `content_color` | `"#94a3b8"` | Safe — answer text color |
+
+**The following keys BREAK the widget editor panel on import** (accordion becomes non-editable):  
+`background_color`, `icon{}`, `icon_active{}`, `border_color`, `typography_*`, `content_typography_*`, `icon_color`, `icon_active_color`, `title_active_color`.
 
 ```json
 {
@@ -408,12 +292,15 @@ Any additional style keys (`background_color`, `icon`, `icon_active`, `border_co
       { "_id": "a1b2c3d", "tab_title": "Question?", "tab_content": "<p>Answer text.</p>" }
     ],
     "active_item": 1,
-    "title_html_tag": "h3"
+    "title_html_tag": "h3",
+    "title_color": "#ffffff",
+    "active_color": "#00e5ff",
+    "content_color": "#94a3b8"
   },
   "elements": []
 }
 ```
-Style the accordion visually inside the Elementor editor after import.
+For any other styling (border, background, typography, icons) — style inside the Elementor editor after import.
 
 **video:** `youtube_url` / `vimeo_url`, `autoplay`, `mute`, `loop`
 
