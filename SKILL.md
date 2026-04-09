@@ -536,3 +536,125 @@ All CTA buttons: `https://wa.me/972XXXXXXXXX`
 `"link": {"url": "https://wa.me/972500000000", "is_external": "on"}`
 
 Contact details appear ONLY in Footer and Contact page — never in content sections.
+
+---
+
+## §3e — Grid Layout Rules (Items per Row)
+
+Apply these ALWAYS for card grids, services, stats, or any repeating element.
+
+### The Rules
+
+| Item count | Layout | Width each |
+|---|---|---|
+| 1 | Full width | 100% |
+| 2 | 1 row of 2 | 48% |
+| 3 | 1 row of 3 | 31% |
+| 4 | **1 row of 4 — NEVER 3+1** | 23% |
+| 5 | 3 top + 2 bottom centered | 31% / 31% |
+| 6 | 2 rows of 3 | 31% |
+| 8 | 2 rows of 4 | 23% |
+| 9 | 3 rows of 3 | 31% |
+
+### Key Rules (User Preference)
+- 4 items = always 1 row of 4. NEVER 3+1 — looks broken.
+- 5 items = 3+2, NEVER 4+1 — symmetry always wins.
+- 6 items = 2 rows of 3.
+
+### 4-Card Row
+
+```json
+{
+  "id": "row4abc",
+  "elType": "container",
+  "settings": {
+    "content_width": "full",
+    "flex_direction": "row",
+    "justify_content": "space-between",
+    "align_items": "stretch",
+    "flex_wrap": "nowrap",
+    "gap": {"unit": "px", "size": 20, "isLinked": true},
+    "width": {"unit": "%", "size": 100}
+  },
+  "elements": ["card1(23%)", "card2(23%)", "card3(23%)", "card4(23%)"]
+}
+```
+
+### 5-Card Layout (3+2) — Two Separate Row Containers
+
+Row 1: 3 cards at 31% each, justify_content: center
+Row 2: 2 cards at 31% each, justify_content: center
+
+---
+
+## §14 — UI/UX Design Principles
+
+Integrated from the frontend-design skill. Apply to every Elementor page.
+
+### Pre-Build Direction Check
+
+1. Purpose: what problem does this page solve? who is the visitor?
+2. Tone: luxury/refined · bold/energetic · minimal/clean · warm · tech/futuristic
+3. One Memorable Element: the single visual detail the visitor will remember
+
+### Typography Scale
+
+| Element | Size | Weight | Line-height |
+|---|---|---|---|
+| H1 Hero | 52-70px | 900 | 1.1em |
+| H2 Section | 36-48px | 700-900 | 1.15em |
+| H3 Card title | 20-24px | 700 | 1.3em |
+| Body text | 16-18px | 400 | 1.7em |
+| Labels/tags | 12-14px | 600 | — |
+
+- Default font: Heebo for Hebrew. Never use Arial, Inter, Roboto.
+- Weight contrast: 900 hero titles + 400 body = strong visual rhythm.
+
+### Color Rules
+
+- Max 3 main colors: 1 primary + 1 accent + neutrals.
+- Body text contrast: minimum 4.5:1 (WCAG AA).
+- Dark bg values: #07080f / #0f1120 / #1a1a2e — not pure #000.
+- Light text on dark: #ffffff headings · #8891b4 subtext.
+- Accent: CTA buttons + highlights only — not everything.
+
+### Spacing
+
+- Section padding: 80-100px top/bottom minimum.
+- Card internal padding: 28-36px.
+- Gap between cards: 20-32px.
+- Hero min-height: 80vh.
+- Generous whitespace = trust signal.
+
+### Visual Depth for Dark Cards
+
+```json
+{
+  "border_border": "solid",
+  "border_width": {"unit": "px", "top": "1", "right": "1", "bottom": "1", "left": "1", "isLinked": true},
+  "border_color": "#1e2240",
+  "border_radius": {"unit": "px", "top": 16, "right": 16, "bottom": 16, "left": 16, "isLinked": true},
+  "box_shadow_box_shadow_type": "yes",
+  "box_shadow_box_shadow": {"horizontal": 0, "vertical": 8, "blur": 30, "spread": 0, "color": "rgba(0,0,0,0.3)"}
+}
+```
+
+### Section Background Alternation
+
+- Hero: #07080f
+- Stats bar: #07080f + border #1e2240
+- Services: #07080f
+- Process: #0f1120
+- Testimonials: #07080f
+- CTA: gradient #0f0820 to #07080f
+
+### Final Quality Checklist
+
+- [ ] Every section: 80px+ padding top/bottom
+- [ ] Card counts obey §3e — no orphan cards (no 3+1, no 4+1)
+- [ ] Animations only on widgets — NEVER on containers
+- [ ] All CTAs: WhatsApp + is_external: "on"
+- [ ] Font: Heebo + correct size hierarchy
+- [ ] Dark cards: border + box-shadow
+- [ ] No text-only sections — always visual structure
+- [ ] Animation delays staggered 100-200ms apart
